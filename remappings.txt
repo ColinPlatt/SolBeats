@@ -1,0 +1,9 @@
+abdk-libraries-solidity/=lib/libAudio/lib/abdk-libraries-solidity/
+ds-test/=lib/solady/lib/ds-test/src/
+forge-std/=lib/forge-std/src/
+libAudio/=lib/libAudio/
+num_complex_solidity/=lib/libAudio/lib/num_complex_solidity/src/
+prb-math/=lib/libAudio/lib/solidity-trigonometry/lib/prb-math/contracts/
+solady/=lib/solady/
+solidity-trigonometry/=lib/libAudio/lib/solidity-trigonometry/src/
+solmate/=lib/solmate/src/
