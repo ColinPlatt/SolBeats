@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{SolBeats();}</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            margin: 0;
+            font-size: 18px;
+            font-family: Monospace;
+        }
+
+        .iframe {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 18px;
+            font-family: Monospace;
+            z-index: 9999;
+        }
+
+        .arrow {
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 10px;
+            border-color: transparent transparent rgba(255, 0, 0, 0.8) transparent;
+            position: absolute;
+            top: -20px;
+            right: 25px;
+        }
+
+        .web3 {
+            display: none;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: lightgray;
+            font-size: 20px;
+            font-family: Monospace;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 999;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .input-container {
+            margin-top: 20px;
+        }
+
+        input {
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-size: 16px;
+        }
+
+        .dot {
+            margin: 10px 20px;
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot-red {
+            background-color: red;
+        }
+
+        .dot-green {
+            background-color: green;
+        }
+
+        .top-right {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .connectButton,
+        .switchButton {
+            display: none;
+            padding: 5px 20px;
+            font-size: 16px;
+        }
+
+        .mintButton,
+        .playButton{
+            display: block;
+            padding: 5px 20px;
+            font-size: 16px;
+        }
+
+        .output-box {
+            display: none;
+            text-align: left;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            width: 80%;
+            max-width: 800px; /* Adjust the max-width to your preference */
+            margin: 20px auto;
+            background-color: black;
+            padding: 10px;
+            font-family: Monospace;
+            color: white;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+</head>
+<body>
+    <div class="header-bar">
+        <div class="title">{SolBeats();}</div>
+        <div class="top-right">
+            <div class="dot"></div>
+            <button class="connect-button">Connect Wallet</button>
+            <button class="switch-button">Switch to Arbitrum</button>            
+        </div>
+    </div>
+
+    <div class="web3">
+        <div class="content">
+            <div class="input-container">
+                <input type="text" placeholder="Enter a line">
+            </div>
+            <div class="button-container">
+                <button class="mint-button">Play</button>
+                <button class="play-button">Mint</button>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="iframe">
+        <div class="arrow"></div>
+        <span class="body">Please click "View Original Media"</span>
+        <span class="material-icons-outlined">open_in_new</span>
+        <span class="body">to enable Web3 features</span>
+    </div>
+
+    <div class="output-box"></div>
+
+    <script>
+        function compileContract(input) {
+            return new Promise((resolve, reject) => {
+                var bundleCode = // ommited for brevity
+                const contentType = 'application/javascript';
+
+                const byteCharacters = atob(bundleCode);
+                const byteArrays = [];
+                const sliceSize = 512;
+            
+                for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                    const slice = byteCharacters.slice(offset, offset + sliceSize);
+                    const byteNumbers = new Uint8Array(slice.length);
+                    
+                    for (let i = 0; i < slice.length; i++) {
+                        byteNumbers[i] = slice.charCodeAt(i);
+                    }
+            
+                    byteArrays.push(byteNumbers);
+                }
+            
+                const blob = new Blob(byteArrays, { type: contentType });
+                const blobUrl = URL.createObjectURL(blob);
+            
+                var worker = new Worker(blobUrl);
+                worker.addEventListener('message', function (e) {
+                    const output = e.data.output;
+                    resolve(output);
+                }, false);
+
+                //'t>>(t%16==0?4:6)|t>>(t%128==0?10:4)';
+
+                worker.postMessage({
+                    contractCode: `contract BEAT {uint32 public constant OFFSET = 0; uint32 public constant SAMPLE_RATE = 8000; uint32 public constant LENGTH = SAMPLE_RATE * 60; function getBeat() external pure returns (bytes memory, uint32) { bytes memory buffer = new bytes(LENGTH); for(uint256 t = OFFSET; t<LENGTH+OFFSET; ++t) { buffer[t-OFFSET] = bytes1(uint8(${input})); } return (buffer, SAMPLE_RATE); } }`,
+                });
+
+                worker.onmessage = function (e) {
+                    const output = e.data;
+                    resolve(output);
+                };
+
+                worker.onerror = function (e) {
+                    reject(new Error(e.message));
+                };
+            });
+        }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window == window.top) {
+                var web3 = document.querySelector('.web3');
+                var connectButton = document.querySelector('.connect-button');
+                var switchButton = document.querySelector('.switch-button');
+                var mintButton = document.querySelector('.mint-button');
+                var outputBox = document.querySelector('.output-box');
+
+                web3.style.display = 'block';
+
+                if (typeof window.ethereum !== 'undefined') {
+                    window.ethereum.request({ method: 'eth_requestAccounts' });
+
+                    ethereum
+                        .request({ method: 'eth_accounts' })
+                        .then(function (accounts) {
+                            if (accounts.length === 0) {
+                                setDotColor('red');
+                                connectButton.style.display = 'block';
+                                switchButton.style.display = 'none';
+                            } else {
+                                ethereum
+                                    .request({ method: 'eth_chainId' })
+                                    .then(function (chainId) {
+                                        if (chainId === '0xa4b1') {
+                                            setDotColor('green');
+                                            connectButton.style.display = 'none';
+                                            switchButton.style.display = 'none';
+                                        } else {
+                                            setDotColor('red');
+                                            connectButton.style.display = 'none';
+                                            switchButton.style.display = 'block';
+                                        }
+                                    })
+                                    .catch(console.error);
+                            }
+                        })
+                        .catch(console.error);
+
+                    connectButton.addEventListener('click', function () {
+                        ethereum
+                            .request({ method: 'eth_requestAccounts' })
+                            .then(function (accounts) {
+                                if (accounts.length > 0) {
+                                    setDotColor('green');
+                                    connectButton.style.display = 'none';
+                                    switchButton.style.display = 'none';
+                                }
+                            })
+                            .catch(console.error);
+                    });
+
+                    switchButton.addEventListener('click', function () {
+                        window.ethereum.request({
+                            method: "wallet_addEthereumChain",
+                            params: [{
+                                chainId: "0xa4b1",
+                                rpcUrls: ["https://arbitrum-one.publicnode.com"],
+                                chainName: "Arbitrum One",
+                                nativeCurrency: {
+                                    name: "Arbitrum ETH",
+                                    symbol: "ETH",
+                                    decimals: 18,
+                                },
+                                blockExplorerUrls: ["https://explorer.arbitrum.io/"],
+                            }],
+                        }).then(function () {
+                            switchButton.style.display = 'none';
+                        })
+                            .catch(console.error);
+                    });
+
+                    mintButton.addEventListener('click', function () {
+                        var lineInput = document.querySelector('input[type="text"]');
+                        var line = lineInput.value;
+                        if (!line) {
+                            alert('Please enter a line');
+                            return;
+                        }
+                        compileContract(line)
+                            .then(output => {
+                                if (output.error) {
+                                    alert('There was an error compiling. The formula should only include a single variable "t".');
+                                } else {
+                                    for (var contractName in output.contracts['contract']) {
+                                        var bytecode = output.contracts['contract'][contractName].evm.bytecode.object;
+                                        outputBox.innerHTML = `Bytecode of contract ${contractName}:\n${bytecode}`;
+                                        outputBox.style.display = 'block';
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error(error);
+                            });
+                    });
+                } else {
+                    setDotColor('red');
+                    connectButton.style.display = 'block';
+                    switchButton.style.display = 'none';
+                }
+            } else {
+                document.querySelector('.iframe').style.display = 'block';
+            }
+        });
+
+        function setDotColor(color) {
+            document.querySelector('.dot').style.backgroundColor = color;
+        }
+    </script>
+    
+</body>
+</html>

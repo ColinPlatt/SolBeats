@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+</head>
+
+<body>
+	<script>
+        var contractCode = `pragma solidity >=0.4.22 <0.9.0;
+
+                            contract SimpleStorage {
+                                uint storedData;
+
+                                function set(uint x) public {
+                                    storedData = x;
+                                }
+
+                                function get() public view returns (uint) {
+                                    return storedData;
+                                }
+                            }`;
+
+		var worker = new Worker('./worker.js');
+		worker.onmessage = function (e) {
+			console.log(e.data.output) // This will log the compiler output
+		};
+
+		worker.postMessage({contractCode: contractCode}); // Post the contract code to the worker
+	</script>
+</body>
+
+</html>

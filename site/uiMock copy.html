@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>IFrame Detection</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            margin: 0;
+            font-size: 18px;
+            font-family: Monospace;
+        }
+
+        .iframe {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 18px;
+            font-family: Monospace;
+            z-index: 9999;
+        }
+
+        .arrow {
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 10px;
+            border-color: transparent transparent rgba(255, 0, 0, 0.8) transparent;
+            position: absolute;
+            top: -20px;
+            right: 25px;
+        }
+
+        .web3 {
+            display: none;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: lightgray;
+            font-size: 20px;
+            font-family: Monospace;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 999;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .input-container {
+            margin-top: 20px;
+        }
+
+        input {
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-size: 16px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot-red {
+            background-color: red;
+        }
+
+        .dot-green {
+            background-color: green;
+        }
+
+        .top-right {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .switch-button,
+        .connect-button {
+            display: none;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+</head>
+<body>
+    <div class="header-bar">
+        <div class="title">{SolBeats();}</div>
+        <div class="top-right">
+            <button class="connect-button">Connect Wallet</button>
+            <button class="switch-button">Switch to Arbitrum</button>
+        </div>
+    </div>
+
+    <div class="web3">
+        <div class="content">
+            <div class="input-container">
+                <input type="text" placeholder="Enter a line">
+            </div>
+            <div class="button-container">
+                <button class="play-button">Play</button>
+                <button class="mint-button">Mint</button>
+            </div>
+        </div>
+        <div class="dot"></div>
+    </div>
+
+    <div class="iframe">
+        <div class="arrow"></div>
+        <span class="body">Please click "View Original Media"</span>
+        <span class="material-icons-outlined">open_in_new</span>
+        <span class="body">to enable Web3 features</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window == window.top) {
+                var web3 = document.querySelector('.web3');
+                var connectButton = document.querySelector('.connect-button');
+                var switchButton = document.querySelector('.switch-button');
+                var mintButton = document.querySelector('.mint-button');
+                var contractCode = `// SPDX-License-Identifier: The Unlicense
+                    pragma solidity ^0.8.19;
+
+                    contract BEAT {
+
+                        uint32 public constant OFFSET = 0;
+                        uint32 public constant SAMPLE_RATE = 8000;
+                        uint32 public constant LENGTH = SAMPLE_RATE * 60;
+
+                        function getBeat() external pure returns (bytes memory, uint32) {
+                        
+                            bytes memory buffer = new bytes(LENGTH);
+
+                            unchecked {
+                                for(uint256 t = OFFSET; t<LENGTH+OFFSET; ++t) {
+                                    buffer[t-OFFSET] = bytes1(uint8([input])));
+                                }
+                            }
+
+                            return (buffer, SAMPLE_RATE);
+                        }
+
+                    }`;
+
+
+                web3.style.display = 'block';
+
+                // Check for MetaMask
+                if (typeof window.ethereum !== 'undefined') {
+                    // MetaMask is installed
+                    ethereum
+                        .request({ method: 'eth_accounts' })
+                        .then(function (accounts) {
+                            // Check if connected
+                            if (accounts.length === 0) {
+                                // Not connected
+                                setDotColor('red');
+                                connectButton.style.display = 'block';
+                                switchButton.style.display = 'none';
+                            } else {
+                                // Check if connected to Arbitrum One (chainId 42161)
+                                ethereum
+                                    .request({ method: 'eth_chainId' })
+                                    .then(function (chainId) {
+                                        if (chainId === '0xa4b1') {
+                                            // Connected to Arbitrum
+                                            setDotColor('green');
+                                            connectButton.style.display = 'none';
+                                            switchButton.style.display = 'none';
+                                        } else {
+                                            // Connected to another network
+                                            setDotColor('red');
+                                            connectButton.style.display = 'none';
+                                            switchButton.style.display = 'block';
+                                        }
+                                    })
+                                    .catch(console.error);
+                            }
+                        })
+                        .catch(console.error);
+
+                    // Connect Wallet button
+                    connectButton.addEventListener('click', function () {
+                        ethereum
+                            .request({ method: 'eth_requestAccounts' })
+                            .then(function (accounts) {
+                                if (accounts.length > 0) {
+                                    setDotColor('green');
+                                    connectButton.style.display = 'none';
+                                    switchButton.style.display = 'none';
+                                }
+                            })
+                            .catch(console.error);
+                    });
+
+                    // Switch to Arbitrum button
+                    switchButton.addEventListener('click', function () {
+                        window.ethereum.request({
+                            method: "wallet_addEthereumChain",
+                            params: [{
+                                chainId: "0xa4b1",
+                                rpcUrls: ["https://arbitrum-one.publicnode.com"],
+                                chainName: "Arbitrum One",
+                                nativeCurrency: {
+                                    symbol: "ETH",
+                                    decimals: 18
+                                },
+                                blockExplorerUrls: ["https://arbiscan.io"]
+                            }]
+                        }).then(function () {
+                            setDotColor('green');
+                            connectButton.style.display = 'none';
+                            switchButton.style.display = 'none';
+                        }).catch(function (error) {
+                            console.error("Error switching to Arbitrum:", error);
+                        });
+                    });
+
+                    // Mint button
+                    mintButton.addEventListener('click', function () {
+                        var input = document.querySelector('input').value;
+                        if (input === "") {
+                            console.error("Please enter a value in the input box.");
+                            return;
+                        }
+                        var updatedContractCode = contractCode.replace("[input]", input);
+                        var inputContract = {
+                            language: "Solidity",
+                            sources: {
+                                "contract.sol": {
+                                    content: updatedContractCode
+                                }
+                            },
+                            settings: {
+                                outputSelection: {
+                                    "*": {
+                                        "*": ["abi", "evm.bytecode"]
+                                    }
+                                }
+                            }
+                        };
+
+                        var solcInput = JSON.stringify(inputContract);
+
+                        var workerCode = `
+                            self.onmessage = function(event) {
+                                ${solcModuleCode}
+                                var solc = self.solc;
+                                var input = event.data;
+                                var output = solc.compile(input);
+                                self.postMessage(output);
+                            };
+                        `;
+
+                        var workerBlob = new Blob([workerCode], { type: "application/javascript" });
+                        var workerUrl = URL.createObjectURL(workerBlob);
+                        var worker = new Worker(workerUrl);
+
+                        worker.onmessage = function (event) {
+                            console.log(event.data);
+                        };
+
+                        worker.onerror = function (error) {
+                            console.error("Error compiling contract:", error);
+                        };
+
+                        worker.postMessage(solcInput);
+                    });
+
+
+                } else {
+                    // MetaMask is not installed
+                    console.log('MetaMask not detected');
+                }
+            } else {
+                document.querySelector('.iframe').style.display = 'block';
+                document.querySelector('.web3').style.display = 'none';
+                toggleSwitchButton();
+                toggleConnectButton();
+            }
+        });
+
+        function setDotColor(color) {
+            var dot = document.querySelector('.dot');
+            dot.classList.remove('dot-red', 'dot-green');
+            dot.classList.add('dot-' + color);
+        }
+
+        function toggleConnectButton() {
+            var connectButton = document.querySelector('.connect-button');
+            connectButton.style.display = connectButton.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleSwitchButton() {
+            var switchButton = document.querySelector('.switch-button');
+            switchButton.style.display = switchButton.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
