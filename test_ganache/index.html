@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Ganache Local Testnet</title>
+        <script src="https://cdn.jsdelivr.net/npm/ganache@7.8.0/dist/web/ganache.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.5.1/ethers.umd.min.js"></script>
+    </head>
+    <body>
+        <button onclick="deployAndCallContract()">Deploy and Call Contract</button>
+    </body>
+
+    <script>
+        async function deployAndCallContract() {
+            const options = { 
+                miner: { 
+                    blockGasLimit : "0xffffffffffffffffffffffffffffffff",
+                    callGasLimit : "0xffffffffffffffffffffffffffffffff",
+                    defaultGasLimit : "0x0000",
+                }
+            };
+            //const accounts = await provider.request({ method: "eth_accounts", params: [] });
+            let provider = new ethers.BrowserProvider(Ganache.provider(options));
+            let signer = await provider.getSigner(0);
+
+            const compiledBytecode = '608060405234801561001057600080fd5b5061034d806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80632e6636521461005157806360b0d83314610073578063655d2c2714610089578063ce665dd814610092575b600080fd5b61005961009a565b60405163ffffffff90911681526020015b60405180910390f35b61007b6100aa565b60405161006a9291906101da565b610059611f4081565b610059600081565b6100a7611f40600161024b565b81565b60606000806100bc611f40600161024b565b63ffffffff1667ffffffffffffffff8111156100da576100da610273565b6040519080825280601f01601f191660200182016040528015610104576020820181803683370190505b50905060005b6000610119611f40600161024b565b6101239190610289565b63ffffffff168110156101cf5761013b6080826102ad565b1561014757600461014a565b600a5b60ff1681901c61015b6010836102ad565b1561016757600661016a565b60045b60ff1682901c1760f81b826101806000846102cf565b81518110610190576101906102e8565b60200101907effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916908160001a9053506101c8816102fe565b905061010a565b5092611f4092509050565b604081526000835180604084015260005b8181101561020857602081870181015160608684010152016101eb565b506000606082850101526060601f19601f83011684010191505063ffffffff831660208301529392505050565b634e487b7160e01b600052601160045260246000fd5b63ffffffff81811683821602808216919082811461026b5761026b610235565b505092915050565b634e487b7160e01b600052604160045260246000fd5b63ffffffff8181168382160190808211156102a6576102a6610235565b5092915050565b6000826102ca57634e487b7160e01b600052601260045260246000fd5b500690565b818103818111156102e2576102e2610235565b92915050565b634e487b7160e01b600052603260045260246000fd5b60006001820161031057610310610235565b506001019056fea264697066735822122037e159121e8c05adfec8ed71799c851d8699d90c21233945aff81b07afab237b64736f6c63430008130033';
+
+            // figure this out after
+            const abi = [
+                "function getBeat() pure returns (bytes memory, uint32)"
+            ];
+
+            const factory = new ethers.ContractFactory(abi, compiledBytecode, signer);
+            const contract = await factory.deploy();
+
+            const deploymentReceipt = await contract.deploymentTransaction().wait();
+
+            console.log("address:", deploymentReceipt.contractAddress);
+            console.log("deployTransaction:", deploymentReceipt.hash);
+            
+            // Call the contract function
+            try {
+                const result = await contract.getBeat();
+                console.log("getBeat result:", result);
+            } catch (error) {
+                console.error("Error calling getBeat:", error);
+            }
+            
+            console.log("here");
+
+        }
+    </script>
+</html>

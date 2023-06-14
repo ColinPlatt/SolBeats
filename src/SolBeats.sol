@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "lib/solmate/src/tokens/ERC721.sol";
 import {Ownable, Base64, LibString} from "lib/solady/src/Milady.sol";
-import {CREATE2} from "./utils/CREATE2.sol";
+import {Create2} from "./utils/CREATE2.sol";
 
 interface IBEAT {
     function getBeat() external view returns (bytes memory);
@@ -30,7 +30,7 @@ contract SolBeats is ERC721('SolBeats', unicode'🎚️'), Ownable {
         require(msg.value == MINT_COST, "SolBeats: Mint cost is 0.001 ether");
         uint256 tokenId = totalSupply;
         totalSupply++;
-        CREATE2.deploy(tokenId, bytecode);
+        Create2.deploy(tokenId, bytecode);
         beatStrings[tokenId] = beatString;
         _mint(to, tokenId);
     }

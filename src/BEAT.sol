@@ -6,7 +6,7 @@ contract BEAT {
     
     uint32 public constant OFFSET = 0;
     uint32 public constant SAMPLE_RATE = 8000;
-    uint32 public constant LENGTH = SAMPLE_RATE * 60;
+    uint32 public constant LENGTH = SAMPLE_RATE * 1;
 
     function getBeat() external pure returns (bytes memory, uint32) {
     
