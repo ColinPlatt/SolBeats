@@ -13,5 +13,5 @@ docs/
 # Dotenv file
 .env
 
-# Folder for local JS testing
-test_web/
+# node modules testing
+*/node_modules/
