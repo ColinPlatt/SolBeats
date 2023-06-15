@@ -77,7 +77,7 @@
         }
 
         .input-container {
-            width: 80%;  
+            width: 88%;  
             margin-top: 20px; 
             padding: 10px; 
         }
@@ -95,8 +95,31 @@
 
         button {
             padding: 10px 20px;
-            margin: 0 5px;
+            height: 40px;
+            margin: 15px 5px;
             font-size: 16px;
+        }
+
+        .options-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1em;
+        }
+
+        .options-container label {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin-right: 10px; /* Add some spacing between the elements */
+        }
+
+        .options-container select,
+        .options-container input {
+            margin-top: 0.5em;
+            height: 30px; /* Make all the select/input elements the same height */
+            width: 100%; /* Make all the select/input elements the same width */
+            box-sizing: border-box; /* This makes the width include the padding and border */
+            padding: 3px; /* Add some padding to the input/select boxes */
         }
 
         .audio-div {
@@ -148,6 +171,31 @@
                 <input type="text" placeholder="Enter a beat formula, using a single variable `t`, ex. (t>>4)*(t>>3)|t>>2">
             </div>
             <div class="button-container">
+                <div class="options-container">
+                    <label>
+                        Sample Rate (Hz): 
+                        <select id="sampleRate">
+                            <option value="8000" selected>8000</option>
+                            <option value="11025">11025</option>
+                            <option value="22050">22050</option>
+                        </select>
+                    </label>
+                    <label>
+                        Length (seconds): 
+                        <select id="length">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="5">5</option>
+                            <option value="15">15</option>
+                            <option value="30">30</option>
+                            <option value="60" selected>60</option>
+                        </select>
+                    </label>
+                    <label>
+                        Offset (samples): 
+                        <input type="number" id="value" min="0" value="0">
+                    </label>
+                </div>
                 <button class="play-button" title="This will create a local blockchain in your browser and deploy a test contract, it may take a few moments to generate. Please be patient">Demo</button>
                 <button class="mint-button">Mint</button>
             </div>
