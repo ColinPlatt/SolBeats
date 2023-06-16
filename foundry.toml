@@ -4,5 +4,7 @@ out = "out"
 libs = ["lib"]
 optimizer-runs = 1000
 fs_permissions = [{ access = "read-write", path = "./test/output"}]
+solc='0.8.19'
+etherscan_api_key = "STVUZ4W55CFF9HITI3IUYEG662CHD9GVR9"
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
