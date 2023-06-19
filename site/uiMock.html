@@ -247,7 +247,7 @@
 
                 const sourceCode = test ? 
                     `contract BEAT_TEST { uint32 public constant OFFSET = ${offset}; uint32 public constant SAMPLE_RATE = ${sampleRate}; uint32 public constant LENGTH = SAMPLE_RATE; function getBeat() external pure returns (string memory) { bytes memory buffer = new bytes(LENGTH); for(uint256 t = OFFSET; t<LENGTH+OFFSET; ++t) { buffer[t-OFFSET] = bytes1(uint8(${input})); } return WAV_8BIT.encodeWAV(buffer, SAMPLE_RATE); }}library WAV_8BIT { bytes4 constant RIFF_HDR = hex'52494646'; bytes16 constant WAV_FMT_HDR = hex'57415645666d74201000000001000100';  function reverse(uint32 input) internal pure returns (uint32 v) { v = input; v = ((v & 0xFF00FF00) >> 8) | ((v & 0x00FF00FF) << 8); v = (v >> 16) | (v << 16); } function fmtByteRate(uint32 sampleRate) internal pure returns (bytes12) { bytes4 lsbSampleRate = bytes4(reverse(sampleRate)); return bytes12( bytes.concat( lsbSampleRate, lsbSampleRate, hex'01000800' ) ); } function formatDataChunk(bytes memory audioData) internal pure returns (bytes memory) { return bytes.concat( bytes4('data'), bytes4(reverse(uint32(audioData.length))), audioData ); } function encodeWAV(bytes memory _audioData, uint32 _sampleRate) internal pure returns (string memory) { uint32 audioSize = uint32(_audioData.length); return string.concat( 'data:audio/wav;base64,', Base64.encode( bytes.concat( RIFF_HDR, bytes4(reverse(audioSize+12)), WAV_FMT_HDR, bytes12(fmtByteRate(_sampleRate)), formatDataChunk(_audioData) ) ) ); } }library Base64 { function encode(bytes memory data) internal pure returns (string memory result) { bool fileSafe = false; bool noPadding = false;  assembly { let dataLength := mload(data) if dataLength { let encodedLength := shl(2, div(add(dataLength, 2), 3)) result := mload(0x40) mstore(0x1f, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef") mstore(0x3f, sub("ghijklmnopqrstuvwxyz0123456789-_", mul(iszero(fileSafe), 0x0230))) let ptr := add(result, 0x20) let end := add(ptr, encodedLength) for {} 1 {} { data := add(data, 3) let input := mload(data) mstore8(0, mload(and(shr(18, input), 0x3F))) mstore8(1, mload(and(shr(12, input), 0x3F))) mstore8(2, mload(and(shr(6, input), 0x3F))) mstore8(3, mload(and(input, 0x3F))) mstore(ptr, mload(0x00)) ptr := add(ptr, 4) if iszero(lt(ptr, end)) { break } } mstore(0x40, add(end, 0x20)) let o := div(2, mod(dataLength, 3)) mstore(sub(ptr, o), shl(240, 0x3d3d)) o := mul(iszero(iszero(noPadding)), o) mstore(sub(ptr, o), 0) mstore(result, sub(encodedLength, o)) } } }}`:
-                    `contract BEAT {uint32 public constant OFFSET = ${offset}; uint32 public constant SAMPLE_RATE = ${sampleRate}; uint32 public constant LENGTH = SAMPLE_RATE * ${length}; function getBeat() external pure returns (bytes memory, uint32) { bytes memory buffer = new bytes(LENGTH); for(uint256 t = OFFSET; t<LENGTH+OFFSET; ++t) { buffer[t-OFFSET] = bytes1(uint8(${input})); } return (buffer, SAMPLE_RATE); } }`
+                    `contract BEAT {uint32 public constant OFFSET = ${offset}; uint32 public constant SAMPLE_RATE = ${sampleRate}; uint32 public constant LENGTH = SAMPLE_RATE * ${length}; function getBeat() external pure returns (bytes memory, uint32) { bytes memory buffer = new bytes(LENGTH); unchecked{ for(uint256 t = OFFSET; t<LENGTH+OFFSET; ++t) { buffer[t-OFFSET] = bytes1(uint8(${input})); } } return (buffer, SAMPLE_RATE); } }`
 
                 worker.postMessage({
                     contractCode: sourceCode,
@@ -318,11 +318,11 @@
                                 rpcUrls: ["https://arbitrum-one.publicnode.com"],
                                 chainName: "Arbitrum One",
                                 nativeCurrency: {
-                                    name: "Arbitrum ETH",
-                                    symbol: "ETH",
+                                    name: "Arbitrum One",
+                                    symbol: "AETH",
                                     decimals: 18,
                                 },
-                                blockExplorerUrls: ["https://explorer.arbitrum.io/"],
+                                blockExplorerUrls: ["https://www.arbiscan.io/"],
                             }],
                         }).then(function () {
                             switchButton.style.display = 'none';
@@ -330,14 +330,14 @@
                             .catch(console.error);
                     });
 
-                    mintButton.addEventListener('click', function () {
+                    mintButton.addEventListener('click', async function () {
                         var lineInput = document.querySelector('input[type="text"]');
                         var line = lineInput.value;
                         if (!line) {
                             alert('Please enter a line');
                             return;
                         }
-                        var compiledContract = getCompiledContract(line, false)
+                        var compiledContract = await getCompiledContract(line, false)
                         console.log('compiled contract:', compiledContract);
                         mintToken(compiledContract, line);
                     });
@@ -448,47 +448,26 @@
 
         async function mintToken(compiledContract, line) {
             try {
+
                 // Assuming that you have the contract's ABI and address
-                const abi = [{
-                    "inputs": [
-                        {
-                        "internalType": "address",
-                        "name": "to",
-                        "type": "address"
-                        },
-                        {
-                        "internalType": "bytes",
-                        "name": "bytecode",
-                        "type": "bytes"
-                        },
-                        {
-                        "internalType": "string",
-                        "name": "beatString",
-                        "type": "string"
-                        }
-                    ],
-                    "name": "mint",
-                    "outputs": [],
-                    "stateMutability": "payable",
-                    "type": "function"
-                }];
+                const abi = new ethers.Interface ([
+                    "function mint(bytes calldata bytecode, string calldata beatString) public payable"
+                ]) ;
                 // need to figure out how to inject this
-                const contractAddress = "0x8148a76df1c63655e35929d782b2bc544de4a85d";
+                const contractAddress = "0x4a55CBAc33cfF6149510D498E2B1D314678688e7";
 
                 // Connect to the Ethereum network
-                let provider = new ethers.BrowserProvider(window.ethereum);
-                let signer = provider.getSigner();
-
-                console.log(`checking connection`, signer);
-                console.log(`checking connection`, provider);
+                let provider = await new ethers.BrowserProvider(window.ethereum);
+                let signer = await provider.getSigner();
 
                 // Create a new instance of the contract
-                let contract = new ethers.Contract(contractAddress, abi, signer);
+                let contract = await new ethers.Contract(contractAddress, abi, signer);
 
                 // Call the mint function
-                let amount = ethers.parseEther('0.001'); // 0.001 Ether
-                console.log(amount);
-                let transaction = await contract.mint(compiledContract, line, { value: amount });
+                let amount = ethers.parseEther('0.0025'); // 0.0025 Ether
+                console.log(`compiled contract`, `0x${compiledContract}`);
+                
+                let transaction = await contract.mint(`0x${compiledContract}`, line, { value: amount });
 
                 // Wait for the transaction to be mined
                 let receipt = await transaction.wait();

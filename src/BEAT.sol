@@ -11,8 +11,10 @@ contract BEAT {
     
         bytes memory buffer = new bytes(LENGTH);
 
-        for(uint256 t = OFFSET; t<LENGTH+OFFSET; ++t) {
-            buffer[t-OFFSET] = bytes1(uint8(t*(2-(uint(1&-int(t))>>11))*(5+(2&t>>14))>>(3&t>>8)|t>>2));
+        unchecked{
+            for(uint256 t = OFFSET; t<LENGTH+OFFSET; ++t) {
+                buffer[t-OFFSET] = bytes1(uint8(t>>(t%32==0?4:3)|(t%128==0?t>>3:t>>3|t>>9)));
+            }
         }
 
         return (buffer, SAMPLE_RATE);

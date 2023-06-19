@@ -5,6 +5,7 @@ import "forge-std/Script.sol";
 import "src/SolBeats.sol";
 import {MetadataRender} from "src/MetadataRenderer.sol";
 import {BEAT} from "src/BEAT.sol";
+import {mintingUI} from "src/mintingUI.sol";
 
 contract baseNFT_Script is Script {
     SolBeats public nft; //0x4a55cbac33cff6149510d498e2b1d314678688e7
@@ -52,11 +53,28 @@ contract mintFirst_Script is Script {
         uint256 deployerPrivateKey = vm.envUint("PK");
         vm.startBroadcast(deployerPrivateKey);
             bytes memory byteCode = type(BEAT).creationCode;
-            nft.mint{value: 0.0025 ether}(byteCode, 't*(2-(uint(1&-int(t))>>11))*(5+(2&t>>14))>>(3&t>>8)|t>>2) 30s');
+            nft.mint{value: 0.0025 ether}(byteCode, 't*(2-(uint(1&-int(t))>>11))*(5+(2&t>>14))>>(3&t>>8)|t>>2) unchecked');
         vm.stopBroadcast();
     }
 
 }
 
-//forge script script/solBeats.s.sol:mintFirst_Script --rpc-url $RPC_URL --broadcast --slow -vvvv
-//
+contract addUI_Script is Script {
+
+    address public nft = 0x4a55CBAc33cfF6149510D498E2B1D314678688e7;
+
+
+    function run() public {
+        uint256 deployerPrivateKey = vm.envUint("PK");
+        vm.startBroadcast(deployerPrivateKey);
+            mintingUI ui = new mintingUI(nft);
+            SolBeats(nft).setUI(address(ui));
+        vm.stopBroadcast();
+    }
+
+}
+
+//forge script script/solBeats.s.sol:addUI_Script --rpc-url $RPC_URL --broadcast --slow -vvvv
+
+
+//forge verify-contract 0xec2a007bc44ee155ee78658ccbdea6cc76d0370d src/mintingUI.sol:mintingUI --constructor-args $(cast abi-encode "constructor(address)" 0x4a55CBAc33cfF6149510D498E2B1D314678688e7) --chain-id 421613 --verifier etherscan --etherscan-api-key $ETHERSCAN_API_KEY --watch

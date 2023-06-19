@@ -38,6 +38,30 @@ library json {
             )
         );
     }
+
+    function formattedMetadataHTML(
+        string memory name,
+        string memory description,
+        string memory htmlImg
+    )   internal
+        pure
+        returns (string memory)
+    {
+        return string.concat(
+            'data:application/json;base64,',
+            Base64.encode(
+                bytes(
+                    string.concat(
+                    '{',
+                    _prop('name', name),
+                    _prop('description', description),
+                    _htmlImage(htmlImg),
+                    '}'
+                    )
+                )
+            )
+        );
+    }
     
     function _xmlImage(string memory _svgImg)
         internal
@@ -51,6 +75,21 @@ library json {
                             Base64.encode(bytes(_svgImg))
                         ),
                         false
+        );
+    }
+
+    function _htmlImage(string memory _htmlImg)
+        internal
+        pure
+        returns (string memory) 
+    {
+        return _prop(
+                        'animation_url',
+                        string.concat(
+                            'data:text/html;base64,',
+                            Base64.encode(bytes(_htmlImg))
+                        ),
+                        true
         );
     }
 
