@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{SolBeats();} - Blender</title>
+    <style>
+        .title {
+            color: white;
+            margin: 0;
+            font-size: 20px;
+            font-family: Monospace;
+            font-weight: 600;
+        }
+        
+        body {
+            background-color: black;
+            color: white;
+            margin: 0;
+            font-size: 18px;
+            font-family: Monospace;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            height: 35px;
+            background-color: gray;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 999;
+        }
+
+        .top-right {
+            display: flex; 
+            align-items: center; 
+            right: 10px;
+            padding-right: 15px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .dot-red {
+            background-color: red;
+        }
+
+        .dot-green {
+            background-color: green;
+        }
+
+        .switch-button,
+        .connect-button {
+            display: none;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .web3 {
+            display: none;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        .content {
+            width: 90%;  
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .input-container {
+            width: 60%;  
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px; 
+            padding: 10px; 
+        }
+
+        input {
+            width: 100%;  
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            height: 40px;
+            margin: 15px 5px;
+            font-size: 16px;
+        }
+
+        .options-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1em;
+        }
+
+        .options-container label {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin-right: 10px; /* Add some spacing between the elements */
+        }
+
+        .options-container select,
+        .options-container input {
+            margin-top: 0.5em;
+            height: 30px; /* Make all the select/input elements the same height */
+            width: 100%; /* Make all the select/input elements the same width */
+            box-sizing: border-box; /* This makes the width include the padding and border */
+            padding: 3px; /* Add some padding to the input/select boxes */
+        }
+
+        .audio-div {
+            margin-top: 10px;
+            display: block;
+            clear: both;
+        }        
+
+        .iframe {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            z-index: 9999;
+        }
+
+        .arrow {
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 10px;
+            border-color: transparent transparent rgba(255, 0, 0, 0.8) transparent;
+            position: absolute;
+            top: -20px;
+            right: 25px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/ganache@7.8.0/dist/web/ganache.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.5.1/ethers.umd.min.js"></script>
+</head>
+<body>
+    <div class="header-bar">
+        <div class="title">{SolBeats();} - Blender</div>
+        <div class="top-right">
+            <div class="dot"></div>
+            <button class="connect-button">Connect Wallet</button>
+            <button class="switch-button">Switch to Arbitrum</button>
+        </div>
+    </div>
+
+    <div class="web3">
+        <div class="content">
+            <div class="input-container">
+                <label>
+                    Input Mix 1: 
+                    <input type="number" id="mix1" min="1" value="8">
+                </label>
+                <label>
+                    Input Mix 2: 
+                    <input type="number" id="mix2" min="1" value="10">
+                </label>
+            </div>
+            <div class="button-container">
+                <button class="demo-button" title="This will play a demo">Demo</button>
+                <button class="mint-button">Mint</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="iframe">
+        <div class="arrow"></div>
+        <span class="body">Please click "View Original Media"</span>
+        <span class="material-icons-outlined">open_in_new</span>
+        <span class="body">to enable Web3 features</span>
+    </div>
+        
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window == window.top) {
+                var web3 = document.querySelector('.web3');
+                var connectButton = document.querySelector('.connect-button');
+                var switchButton = document.querySelector('.switch-button');
+                //var mintButton = document.querySelector('.mint-button');
+                var demoButton = document.querySelector('.demo-button');
+
+                web3.style.display = 'block';
+
+                if (typeof window.ethereum !== 'undefined') {
+                    window.ethereum.request({ method: 'eth_requestAccounts' });
+
+                    ethereum
+                        .request({ method: 'eth_accounts' })
+                        .then(function (accounts) {
+                            if (accounts.length === 0) {
+                                setDotColor('red');
+                                connectButton.style.display = 'block';
+                                switchButton.style.display = 'none';
+                            } else {
+                                ethereum
+                                    .request({ method: 'eth_chainId' })
+                                    .then(function (chainId) {
+                                        if (chainId === '0x66eed') {
+                                            setDotColor('green');
+                                            connectButton.style.display = 'none';
+                                            switchButton.style.display = 'none';
+                                        } else {
+                                            setDotColor('red');
+                                            connectButton.style.display = 'none';
+                                            switchButton.style.display = 'block';
+                                        }
+                                    })
+                                    .catch(console.error);
+                            }
+                        })
+                        .catch(console.error);
+
+                    connectButton.addEventListener('click', function () {
+                        ethereum
+                            .request({ method: 'eth_requestAccounts' })
+                            .then(function (accounts) {
+                                if (accounts.length > 0) {
+                                    setDotColor('green');
+                                    connectButton.style.display = 'none';
+                                    switchButton.style.display = 'none';
+                                }
+                            })
+                            .catch(console.error);
+                    });
+
+                    switchButton.addEventListener('click', function () {
+                        window.ethereum.request({
+                            method: "wallet_addEthereumChain",
+                            params: [{
+                                chainId: "0x66eed",
+                                rpcUrls: ["https://arbitrum-goerli.publicnode.com"],
+                                chainName: "Arbitrum Goerli",
+                                nativeCurrency: {
+                                    name: "Arbitrum Goerli",
+                                    symbol: "AGOR",
+                                    decimals: 18,
+                                },
+                                blockExplorerUrls: ["https://goerli.arbiscan.io/"],
+                            }],
+                        }).then(function () {
+                            switchButton.style.display = 'none';
+                        })
+                            .catch(console.error);
+                    });
+
+                    /*mintButton.addEventListener('click', async function () {
+                        var lineInput = document.querySelector('input[type="text"]');
+                        var line = lineInput.value;
+                        if (!line) {
+                            alert('Please enter a line');
+                            return;
+                        }
+                        var compiledContract = await getCompiledContract(line, false)
+                        console.log('compiled contract:', compiledContract);
+                        mintToken(compiledContract, line);
+                    });*/
+
+                    demoButton.addEventListener('click', async function () {
+                        var mix1 = document.getElementById("mix1").value;
+                        var mix2 = document.getElementById("mix2").value;
+                        console.log("mix 1", mix1);
+                        const provider = await new ethers.BrowserProvider(window.ethereum);
+                        const beat1 = await getBeatString(mix1, provider);
+                        const beat2 = await getBeatString(mix2, provider);
+                        
+                        generateMixedWAV(beat1, beat2);
+                    });
+                } else {
+                    setDotColor('red');
+                    connectButton.style.display = 'block';
+                    switchButton.style.display = 'none';
+                    
+                    console.log('window.ethereum is undefined')
+
+                    
+
+                    demoButton.addEventListener('click', async function () {
+                        // Use JSON-RPC provider
+                        const provider = await new ethers.JsonRpcProvider('https://arb-goerli.g.alchemy.com/v2/UfEZi2hHlZWoeP1HGcBjg2PtmMnB3QrR');
+                        console.log('jsonrpc provider:', provider);
+
+                        var mix1 = document.getElementById("mix1").value;
+                        var mix2 = document.getElementById("mix2").value;
+                        console.log("mix 1 jsonrpc", mix1);
+                        const beat1 = await getBeatString(mix1, provider);
+                        const beat2 = await getBeatString(mix2, provider);
+                        
+                        generateMixedWAV(beat1, beat2);
+                    });
+
+                    
+                }
+            } else {
+                document.querySelector('.iframe').style.display = 'block';
+            }
+        });
+
+        function setDotColor(color) {
+            document.querySelector('.dot').style.backgroundColor = color;
+        }
+
+        async function getBeatString(id, provider) {
+            try {
+                const abiSolBeats = new ethers.Interface([
+                    "function beats(uint256) view returns (address minter, address pointer, string memory formula)",
+                ]);
+                const contractAddress = "0x4a55CBAc33cfF6149510D498E2B1D314678688e7";
+                //const provider = await new ethers.BrowserProvider(window.ethereum);
+                const solBeatsContract = await new ethers.Contract(contractAddress, abiSolBeats, provider);
+
+                // Call the beat function
+                const beatInfo = await solBeatsContract.beats(id);
+                console.log('beatInfo:', beatInfo);
+
+                const abiBeat = new ethers.Interface([
+                    "function getBeat() pure returns (bytes memory beat, uint32 sampleRate)"
+                ]);
+
+                console.log('beatInfo.pointer:', beatInfo.pointer)
+                
+                const beatContract = await new ethers.Contract(beatInfo.pointer, abiBeat, provider);
+                //console.log('estimate gas', await beatContract.estimateGas.getBeat());
+                const beatResult = await beatContract.getBeat({gasLimit: 0xFFFFFFFFFFFF});
+
+                return beatResult;
+            } catch (error) {
+                console.log(error)
+                console.error(`Failed to demo token: ${error}`);
+            }
+        }
+
+        function mixBeats(beat1, beat2) {
+            // Remove the "0x" prefix
+            const hex1 = beat1.beat.substr(2); 
+            const hex2 = beat2.beat.substr(2);
+
+            const len = hex1.length > hex2.length ? hex1.length : hex2.length;
+
+            const bytes = new Uint8Array(len / 2);
+            for (let i = 0; i < len; i += 2) {
+                const byte1 = parseInt(hex1.substr(i, 2), 16);
+                const byte2 = parseInt(hex2.substr(i, 2), 16);
+                const mixed = ((byte1 + byte2) / 2)*1.25;
+                bytes[i / 2] = mixed > 255 ? 255 : mixed;
+            }
+
+            return bytes;
+        }
+
+        function generateMixedWAV(beat1, beat2) {
+
+            const binaryData = mixBeats(beat1, beat2);
+
+            const sampleRate = 8000; // 8kHz
+            const numChannels = 1;
+            const bitsPerSample = 8;
+
+            // Create WAV file headers
+            const dataSize = binaryData.byteLength;
+            const fileSize = 44 + dataSize; // 44 is the size of the headers
+            const buffer = new ArrayBuffer(fileSize);
+            const view = new DataView(buffer);
+
+            // Set RIFF chunk descriptor
+            view.setUint32(0, 0x52494646, false); // RIFF header
+            view.setUint32(4, fileSize - 8, true); // File size minus first 8 bytes
+            view.setUint32(8, 0x57415645, false); // WAV header
+
+            // Set format chunk
+            view.setUint32(12, 0x666D7420, false); // 'fmt ' chunk header
+            view.setUint32(16, 16, true); // Size of the 'fmt ' chunk (always 16 for PCM)
+            view.setUint16(20, 1, true); // Audio format (PCM = 1)
+            view.setUint16(22, numChannels, true); // Number of channels
+            view.setUint32(24, sampleRate, true); // Sample rate
+            view.setUint32(28, sampleRate * numChannels * (bitsPerSample / 8), true); // Byte rate
+            view.setUint16(32, numChannels * (bitsPerSample / 8), true); // Block align
+            view.setUint16(34, bitsPerSample, true); // Bits per sample
+
+            // Set data chunk
+            view.setUint32(36, 0x64617461, false); // 'data' chunk header
+            view.setUint32(40, dataSize, true); // Size of the audio data
+
+            // Combine headers and binary data
+            const wavData = new Uint8Array(buffer);
+            wavData.set(binaryData, 44); // Start writing binary data at offset 44
+
+            // Create a Blob from the WAV data
+            const blob = new Blob([wavData], { type: "audio/wav" });
+
+            // Create an audio element
+            const audioElement = document.createElement("audio");
+            audioElement.src = URL.createObjectURL(blob);
+            audioElement.controls = true;
+
+            // Append the audio element to the document's body
+            document.body.appendChild(audioElement);
+
+            // Play the audio
+            audioElement.play();
+
+        }
+
+        function getCompiledContract(line, test) {
+            return new Promise(function (resolve, reject) {
+                compileContract(line, test)
+                    .then(output => {
+                        for (var contractName in output.contracts['contract']) {
+                            const bytecode = output.contracts['contract'][contractName].evm.bytecode.object;
+                            console.log(`Bytecode of contract ${contractName}: ${bytecode}`);
+                            resolve(bytecode);
+                        }
+                    })
+                    .catch(error => {
+                        window.alert("This could not compile. Please ensure that it is a valid single line of Solidity.");
+                        console.error(error);
+                    });
+            });
+        }
+
+        async function mintToken(compiledContract, line) {
+            try {
+
+                // Assuming that you have the contract's ABI and address
+                const abi = new ethers.Interface ([
+                    "function mint(bytes calldata bytecode, string calldata beatString) public payable"
+                ]) ;
+                // need to figure out how to inject this
+                const contractAddress = "0x4a55CBAc33cfF6149510D498E2B1D314678688e7";
+
+                // Connect to the Ethereum network
+                let provider = await new ethers.BrowserProvider(window.ethereum);
+                let signer = await provider.getSigner();
+
+                // Create a new instance of the contract
+                let contract = await new ethers.Contract(contractAddress, abi, signer);
+
+                // Call the mint function
+                let amount = ethers.parseEther('0.0025'); // 0.0025 Ether
+                console.log(`compiled contract`, `0x${compiledContract}`);
+                
+                let transaction = await contract.mint(`0x${compiledContract}`, line, { value: amount });
+
+                // Wait for the transaction to be mined
+                let receipt = await transaction.wait();
+                console.log(`Transaction was mined in block ${receipt.blockNumber}`);
+            } catch (error) {
+                console.error(`Failed to mint token: ${error}`);
+            }
+        }
+    </script>
+    
+</body>
+</html>

@@ -40,7 +40,7 @@ contract metadataRender_Script is Script {
 }
 
 //forge script script/solBeats.s.sol:metadataRender_Script --rpc-url $RPC_URL --broadcast --slow --chain-id 421613 --verifier etherscan --etherscan-api-key $ETHERSCAN_API_KEY -vvvv
-//forge verify-contract 0xc4e5236b0476c9086f0bfe297ea58863c6fb1525 src/MetadataRenderer.sol:MetadataRender --chain-id 421613 --verifier etherscan --etherscan-api-key $ETHERSCAN_API_KEY --watch
+//forge verify-contract 0x7aE647354320828aD4042DF44c52B3195087FF5F src/MetadataRenderer.sol:MetadataRender --chain-id 421613 --verifier etherscan --etherscan-api-key $ETHERSCAN_API_KEY --watch
 
 
 

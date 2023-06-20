@@ -75,11 +75,16 @@ contract MetadataRender is IMetadataRender {
         );
     }
 
+    function generateWAV(address pointer) public view returns (string memory) {
+
+        (bytes memory buffer, uint32 sampleRate) = IBEAT(pointer).getBeat();
+
+        return WAV_8BIT.encodeWAV(buffer, sampleRate);
+    }
+
     function renderURI(uint256 id, ISolBeats.beatInfo memory info) external view returns (string memory) {
 
-        (bytes memory buffer, uint32 sampleRate) = IBEAT(info.beatPointer).getBeat();
-
-        return json.formattedMetadata(string.concat('solBeat #', LibString.toString(id)), "solBeats are an experiment in making fully onchain music.", WAV_8BIT.encodeWAV(buffer, sampleRate), renderSVG(info));
+        return json.formattedMetadata(string.concat('solBeat #', LibString.toString(id)), "solBeats are an experiment in making fully onchain music.", generateWAV(info.beatPointer), renderSVG(info));
 
     }
 
